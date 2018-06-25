@@ -128,6 +128,9 @@ func (c *Client) writePump() {
     for v,_ :=range c.host.clients{
         c.sendMessage("0 "+v.id+" j "+v.name)
     }
+    for _,team :=range c.host.teams{
+        c.sendMessage("2 "+team.id+" c "+team.name)
+    }
 	for {
 		select {
 		case message, ok := <-c.send:
