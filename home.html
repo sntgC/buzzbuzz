@@ -6,27 +6,61 @@
     <link href="https://fonts.googleapis.com/css?family=Lobster|Raleway" rel="stylesheet">
     <script type="text/javascript">
         var buzz;
-        var beep=new Audio("beep.mp3");
-        function render(parts,logID) {
-            if (parts[0] == "0") {
-                if (parts[2] == "j") {
-                    var g = document.createElement("div");
-                    g.id = parts[1];
-                    g.className="player";
-                    g.innerHTML = parts[3];
-                    document.getElementById(logID).appendChild(g);
-                } else if (parts[2] == "l") {
-                    var elem = document.getElementById(parts[1]);
-                    elem.parentElement.removeChild(elem);
-                } else if (parts[2] == "b") {
-                    document.getElementById(parts[1]).style.color = "red";
-                    beep.play();
-                }
-            } else if (parts[0] == "1") {
-                var children = document.getElementById(logID).childNodes;
-                for (i = 0; i < children.length; i++)
-                    if (children[i].style != undefined)
-                        children[i].style.color = "black";
+        var beep = new Audio("beep.mp3");
+
+        function render(parts, type, conn) {
+            switch (parts[0]) {
+                case "0":
+                    //Player action event
+                    if (parts[2] == "j") {
+                        if (document.getElementById(parts[1]) == null) {
+                            var g = document.createElement("div");
+                            g.id = parts[1];
+                            g.className = "player";
+                            g.innerHTML = parts[3];
+                            document.getElementById("log-" + type).appendChild(g);
+                        }
+                    } else if (parts[2] == "l") {
+                        var elem = document.getElementById(parts[1]);
+                        elem.parentElement.removeChild(elem);
+                    } else if (parts[2] == "b") {
+                        document.getElementById(parts[1]).style.color = "red";
+                        beep.play();
+                    }
+                    break;
+                case "1":
+                    //Reset event
+                    var children = document.getElementById("log-" + type).childNodes;
+                    for (i = 0; i < children.length; i++)
+                        if (children[i].style != undefined && children[i].className != "header")
+                            children[i].style.color = "black";
+                    break;
+                case "2":
+                    //Team create event
+                    if (parts[2] == "c") {
+                        var g = document.createElement("div");
+                        g.id = parts[1];
+                        g.className = "team";
+                        g.innerHTML = parts[3] + " ";
+                        var b = document.createElement("button");
+                        b.className = "join";
+                        if (type == "client") {
+                            b.onclick = function() {
+                                conn.send("team/join/" + parts[1]);
+                            }
+                            b.innerHTML = "+";
+                        } else {
+                            b.className = "join reset";
+                            b.onclick = function() {
+                                conn.send("treset/" + parts[1]);
+                            }
+                            b.innerHTML = "R"
+                        }
+                        g.appendChild(b);
+                        document.getElementById("team-" + type).appendChild(g);
+                    }
+                    break;
+
             }
         }
         var getConn;
@@ -36,16 +70,17 @@
                 conn.send("Buzz")
             }
             //REMOVE IN PRODUCTION
-            getConn=function(){
+            getConn = function() {
                 return conn;
             }
+
             function reset() {
                 conn.send("reset")
             }
 
             function host() {
-                document.getElementById("home").style.display="none";
-                document.getElementById("room-host").style.display="flex";
+                document.getElementById("home").style.display = "none";
+                document.getElementById("room-host").style.display = "flex";
                 if (window["WebSocket"]) {
                     conn = new WebSocket("ws://" + document.location.host + "/ws");
                     conn.onclose = function(evt) {
@@ -57,12 +92,12 @@
                         var messages = evt.data.split('\n');
                         for (var i = 0; i < messages.length; i++) {
                             var parts = messages[i].split(" ");
-                            if(parts.length==1){
-                                document.getElementById("rID").innerHTML=messages[i];
+                            if (parts.length == 1) {
+                                document.getElementById("rID").innerHTML = messages[i];
                                 break;
                             }
                             console.log(parts)
-                            render(parts,"log-host")
+                            render(parts, "host", conn)
                         }
                     };
                 } else {
@@ -73,8 +108,8 @@
             }
 
             function join() {
-                document.getElementById("join-form").style.display="none";
-                document.getElementById("room-client").style.display="flex";
+                document.getElementById("join-form").style.display = "none";
+                document.getElementById("room-client").style.display = "flex";
                 if (window["WebSocket"]) {
                     conn = new WebSocket("ws://" + document.location.host + "/client?roomID=" + document.getElementById("room").value + "&name=" + document.getElementById("name").value);
                     conn.onclose = function(evt) {
@@ -87,7 +122,7 @@
                         for (var i = 0; i < messages.length; i++) {
                             var parts = messages[i].split(" ");
                             console.log(parts)
-                            render(parts,"log-client")
+                            render(parts, "client", conn)
                         }
                     };
                 } else {
@@ -100,12 +135,12 @@
             document.getElementById("host").onclick = host;
             document.getElementById("join").onclick = join;
             document.getElementById("buzz").onclick = buzz;
-            document.getElementById("jf").onsubmit=function(e){
+            document.getElementById("jf").onsubmit = function(e) {
                 e.preventDefault();
             }
-            document.getElementById("join-options").onclick=function(){
-                document.getElementById("home").style.display="none";
-                document.getElementById("join-form").style.display="flex";
+            document.getElementById("join-options").onclick = function() {
+                document.getElementById("home").style.display = "none";
+                document.getElementById("join-form").style.display = "flex";
             }
         };
 
@@ -127,19 +162,21 @@
 
         .log {
             background: #e9e9e9;
-            width: 80%;
-            height: 60%;
+            width: 60%;
+            height: 100%;
         }
 
         form {
             display: flex;
             flex-direction: column;
         }
-        label{
+
+        label {
             font-family: "Raleway";
-            font-size:2em;
+            font-size: 2em;
         }
-        .view{
+
+        .view {
             flex-direction: column;
             width: 100%;
             height: 100%;
@@ -147,7 +184,48 @@
             justify-content: center;
             background: #efefef;
         }
-        #home{
+
+        h2 {
+            font-family: "Lobster";
+            font-size: 5em;
+        }
+
+        h3 {
+            font-family: "Lobster";
+            font-size: 3em;
+        }
+
+        .button {
+            font-family: "Raleway";
+            outline: none;
+            border: none;
+            margin: 15px 10px;
+            padding: 15px 20px;
+            font-size: 3em;
+            min-width: 212px;
+            border-radius: 5%;
+            cursor: pointer;
+        }
+
+        #rID {
+            font-family: "Raleway"
+        }
+
+        #join-form {
+            display: none;
+        }
+
+        input[type="text"] {
+            outline: none;
+            font-family: "Raleway";
+            font-size: 2em;
+            border: none;
+            padding: 0 15px;
+            border-radius: 5%;
+        }
+
+
+        #home {
             display: flex;
             flex-direction: column;
             width: 100%;
@@ -156,69 +234,80 @@
             justify-content: center;
             background: #efefef;
         }
-        h2{
-            font-family: "Lobster";
-            font-size: 5em;
-        }
-        h3{
-            font-family: "Lobster";
-            font-size: 3em;
-        }
-        button{
-            font-family: "Raleway";
-            outline:none;
-            border: none;
-            margin:15px 10px;
-            padding: 15px 20px;
-            font-size: 3em;
-            min-width: 212px;
-            border-radius: 5%;
-            cursor: pointer;
-        }
-        #rID{
-            font-family: "Raleway"
-        }
-        #join-form{
+
+        #room-client {
             display: none;
         }
-        input[type="text"]{
-            outline:none;
-            font-family: "Raleway";
-            font-size:2em;
-            border: none;
-            padding:0 15px;
-            border-radius: 5%;
-        }
-        #room-client{
-            display: none;
-        }
-        #rw{
+
+        #rw {
             font-family: "Raleway";
         }
-        #room-host{
+
+        #room-host {
             display: none;
         }
-        .player{
-            font-size: 3.14em;
+
+        .player {
+            font-size: 2em;
             padding: 15px 10px;
             font-family: "Raleway";
         }
+
+        .panel {
+            width: 80%;
+            height: 80%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .team-panel {
+            width: 35%;
+            height: 100%;
+            background: #e9e9e9;
+            border-radius: 1%;
+            font-family: "Raleway"
+        }
+
+        .team {
+            font-size: 2em;
+            margin: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .join {
+            outline: none;
+            border: none;
+            background-color: darkseagreen;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: white;
+            font-size: 50%;
+        }
+
+        .reset {
+            background: red;
+        }
+
+        .header {
+            background: black;
+            color: white;
+            margin: 0;
+            border-radius: 1% 1% 0 0;
+            padding: 4px 10px;
+            font-family: "Raleway";
+        }
+
     </style>
 </head>
 
 <body>
-    <!--<div id="log"></div>
-    <button id="reset">RESET</button>
-    <button id="host">HOST</button>
-    <input type="text" id="room">
-    <label>Name</label>
-    <input type="text" id="name">
-    <button id="join">JOIN</button>
-    <button id="buzz">BUZZ</button>-->
     <div id="home">
         <h2>Buzz Buzz</h2>
-        <button id="host">HOST</button>
-        <button id="join-options">JOIN</button>
+        <button class="button" id="host">HOST</button>
+        <button class="button" id="join-options">JOIN</button>
     </div>
     <div id="join-form" class="view">
         <form id="jf">
@@ -226,19 +315,31 @@
             <input type="text" id="room">
             <label>Name</label>
             <input type="text" id="name">
-            <button id="join">JOIN</button>
+            <button class="button" id="join">JOIN</button>
         </form>
     </div>
     <div id="room-client" class="view">
-        <div id="log-client" class="log">
+        <div id="panel-client" class="panel">
+            <div id="log-client" class="log">
+                <h1 class="header">Players</h1>
+            </div>
+            <div id="team-client" class="team-panel">
+                <h1 class="header">Teams</h1>
+            </div>
         </div>
-        <button id="buzz">BUZZ</button>
+        <button class="button" id="buzz">BUZZ</button>
     </div>
     <div id="room-host" class="view">
         <h3>Your <span id="rw">Room ID</span> is : <span id="rID"></span></h3>
-        <div id="log-host" class="log">
+        <div id="panel-host" class="panel">
+            <div id="log-host" class="log">
+                <h1 class="header">Players</h1>
+            </div>
+            <div id="team-host" class="team-panel">
+                <h1 class="header">Teams</h1>
+            </div>
         </div>
-        <button id="reset">RESET</button>
+        <button class="button" id="reset">RESET</button>
     </div>
 </body>
 

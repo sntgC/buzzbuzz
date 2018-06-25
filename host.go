@@ -150,9 +150,9 @@ func (h *Host) run() {
 		select {
 		case client := <-h.register:
             msg := "0 "+client.id+" j "+client.name
+			h.clients[client] = true
             h.sendMessage(msg)
             h.sendAll(msg)
-			h.clients[client] = true
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)

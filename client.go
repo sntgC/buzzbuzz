@@ -171,7 +171,7 @@ func serveWs(host *Host, w http.ResponseWriter, r *http.Request,name string) {
 		return
 	}
     client := &Client{host: host, conn: conn, send: make(chan []byte, 256),name:name,id:randID(16),team:nil,score:0}
-    defer func(){client.host.register <- client}()
+    client.host.register <- client
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
 	go client.writePump()
