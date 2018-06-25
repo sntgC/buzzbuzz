@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Buzz Buzz</title>
+    <link href="https://fonts.googleapis.com/css?family=Lobster|Raleway" rel="stylesheet">
+    <script type="text/javascript">
+        var buzz;
+        var beep=new Audio("beep.mp3");
+        function render(parts,logID) {
+            if (parts[0] == "0") {
+                if (parts[2] == "j") {
+                    var g = document.createElement("div");
+                    g.id = parts[1];
+                    g.className="player";
+                    g.innerHTML = parts[3];
+                    document.getElementById(logID).appendChild(g);
+                } else if (parts[2] == "l") {
+                    var elem = document.getElementById(parts[1]);
+                    elem.parentElement.removeChild(elem);
+                } else if (parts[2] == "b") {
+                    document.getElementById(parts[1]).style.color = "red";
+                    beep.play();
+                }
+            } else if (parts[0] == "1") {
+                var children = document.getElementById(logID).childNodes;
+                for (i = 0; i < children.length; i++)
+                    if (children[i].style != undefined)
+                        children[i].style.color = "black";
+            }
+        }
+        var getConn;
+        window.onload = function() {
+            var conn;
+            buzz = function() {
+                conn.send("Buzz")
+            }
+            //REMOVE IN PRODUCTION
+            getConn=function(){
+                return conn;
+            }
+            function reset() {
+                conn.send("reset")
+            }
+
+            function host() {
+                document.getElementById("home").style.display="none";
+                document.getElementById("room-host").style.display="flex";
+                if (window["WebSocket"]) {
+                    conn = new WebSocket("ws://" + document.location.host + "/ws");
+                    conn.onclose = function(evt) {
+                        var item = document.createElement("div");
+                        item.innerHTML = "<b>Connection closed.</b>";
+                        console.log(item);
+                    };
+                    conn.onmessage = function(evt) {
+                        var messages = evt.data.split('\n');
+                        for (var i = 0; i < messages.length; i++) {
+                            var parts = messages[i].split(" ");
+                            if(parts.length==1){
+                                document.getElementById("rID").innerHTML=messages[i];
+                                break;
+                            }
+                            console.log(parts)
+                            render(parts,"log-host")
+                        }
+                    };
+                } else {
+                    var item = document.createElement("div");
+                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                    console.log(item);
+                }
+            }
+
+            function join() {
+                document.getElementById("join-form").style.display="none";
+                document.getElementById("room-client").style.display="flex";
+                if (window["WebSocket"]) {
+                    conn = new WebSocket("ws://" + document.location.host + "/client?roomID=" + document.getElementById("room").value + "&name=" + document.getElementById("name").value);
+                    conn.onclose = function(evt) {
+                        var item = document.createElement("div");
+                        item.innerHTML = "<b>Connection closed.</b>";
+                        console.log(item);
+                    };
+                    conn.onmessage = function(evt) {
+                        var messages = evt.data.split('\n');
+                        for (var i = 0; i < messages.length; i++) {
+                            var parts = messages[i].split(" ");
+                            console.log(parts)
+                            render(parts,"log-client")
+                        }
+                    };
+                } else {
+                    var item = document.createElement("div");
+                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                    console.log(item);
+                }
+            }
+            document.getElementById("reset").onclick = reset;
+            document.getElementById("host").onclick = host;
+            document.getElementById("join").onclick = join;
+            document.getElementById("buzz").onclick = buzz;
+            document.getElementById("jf").onsubmit=function(e){
+                e.preventDefault();
+            }
+            document.getElementById("join-options").onclick=function(){
+                document.getElementById("home").style.display="none";
+                document.getElementById("join-form").style.display="flex";
+            }
+        };
+
+    </script>
+    <style type="text/css">
+        html {
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        body {
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            background: gray;
+        }
+
+        .log {
+            background: #e9e9e9;
+            width: 80%;
+            height: 60%;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label{
+            font-family: "Raleway";
+            font-size:2em;
+        }
+        .view{
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            background: #efefef;
+        }
+        #home{
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            background: #efefef;
+        }
+        h2{
+            font-family: "Lobster";
+            font-size: 5em;
+        }
+        h3{
+            font-family: "Lobster";
+            font-size: 3em;
+        }
+        button{
+            font-family: "Raleway";
+            outline:none;
+            border: none;
+            margin:15px 10px;
+            padding: 15px 20px;
+            font-size: 3em;
+            min-width: 212px;
+            border-radius: 5%;
+            cursor: pointer;
+        }
+        #rID{
+            font-family: "Raleway"
+        }
+        #join-form{
+            display: none;
+        }
+        input[type="text"]{
+            outline:none;
+            font-family: "Raleway";
+            font-size:2em;
+            border: none;
+            padding:0 15px;
+            border-radius: 5%;
+        }
+        #room-client{
+            display: none;
+        }
+        #rw{
+            font-family: "Raleway";
+        }
+        #room-host{
+            display: none;
+        }
+        .player{
+            font-size: 3.14em;
+            padding: 15px 10px;
+            font-family: "Raleway";
+        }
+    </style>
+</head>
+
+<body>
+    <!--<div id="log"></div>
+    <button id="reset">RESET</button>
+    <button id="host">HOST</button>
+    <input type="text" id="room">
+    <label>Name</label>
+    <input type="text" id="name">
+    <button id="join">JOIN</button>
+    <button id="buzz">BUZZ</button>-->
+    <div id="home">
+        <h2>Buzz Buzz</h2>
+        <button id="host">HOST</button>
+        <button id="join-options">JOIN</button>
+    </div>
+    <div id="join-form" class="view">
+        <form id="jf">
+            <label>Room ID</label>
+            <input type="text" id="room">
+            <label>Name</label>
+            <input type="text" id="name">
+            <button id="join">JOIN</button>
+        </form>
+    </div>
+    <div id="room-client" class="view">
+        <div id="log-client" class="log">
+        </div>
+        <button id="buzz">BUZZ</button>
+    </div>
+    <div id="room-host" class="view">
+        <h3>Your <span id="rw">Room ID</span> is : <span id="rID"></span></h3>
+        <div id="log-host" class="log">
+        </div>
+        <button id="reset">RESET</button>
+    </div>
+</body>
+
+</html>
