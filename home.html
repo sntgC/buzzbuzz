@@ -30,6 +30,20 @@
             return ret;
         }
         
+        function cTi(str){
+            if(str.length==0)
+                return 0;
+            return parseInt(str.substring(0,str.length-2));
+        }
+        
+        function reorder(id){
+            var children=getSortedChildren(id);
+            for(i=0;i<children.length;i++){
+                children[i].style.order=1+i;
+                children[i].style.top=(i*children[i].offsetHeight)+"px";
+            }
+        }
+        
         function render(parts, type, conn) {
             switch (parts[0]) {
                 case "0":
@@ -46,11 +60,15 @@
                             score.className="player-score";
                             score.innerHTML=0;
                             g.appendChild(score);
-                            document.getElementById("log-" + type).appendChild(g);
+                            var listNode=document.getElementById("log-"+type);
+                            listNode.appendChild(g);
+                            g.style.top=cTi(listNode.style.height)+"px";
+                            listNode.style.height=(cTi(listNode.style.height)+g.offsetHeight)+"px";
                         }
                     } else if (parts[2] == "l") {
                         var elem = document.getElementById(parts[1]);
                         elem.parentElement.removeChild(elem);
+                        reorder("log-"+type)
                     } else if (parts[2] == "b") {
                         document.getElementById(parts[1]).style.color = "red";
                         beep.play();
@@ -92,10 +110,7 @@
                     //score event
                     var score=parseInt(parts[2]);
                     document.getElementById(parts[1]+"_score").innerHTML=parts[2];
-                    var children=getSortedChildren("log-"+type);
-                    for(i=0;i<children.length;i++){
-                        children[i].style.order=1+i;
-                    }
+                    reorder("log"+type);
                     break;
 
             }
@@ -205,8 +220,10 @@
     </div>
     <div id="room-client" class="view">
         <div id="panel-client" class="panel">
-            <div id="log-client" class="log">
+            <div class="log">
                 <h1 class="header">Players</h1>
+                <div class="player-list"  id="log-client">
+                </div>
             </div>
             <div id="team-client" class="team-panel">
                 <h1 class="header">Teams</h1>
@@ -217,8 +234,19 @@
     <div id="room-host" class="view">
         <h3>Your <span id="rw">Room ID</span> is : <span id="rID"></span></h3>
         <div id="panel-host" class="panel">
-            <div id="log-host" class="log">
+            <div  class="log">
                 <h1 class="header">Players</h1>
+                <div class="player-list" id="log-host">
+                    <!--<div class="player" id="a">Art<span class="player-score" id="a_score">0</span></div>
+                    <div class="player" id="b">Bart<span class="player-score" id="b_score">10</span></div>
+                    <div class="player" id="c">Cart<span class="player-score" id="c_score">20</span></div>
+                    <div class="player" id="a">Art<span class="player-score" id="a_score">0</span></div>
+                    <div class="player" id="b">Bart<span class="player-score" id="b_score">10</span></div>
+                    <div class="player" id="c">Cart<span class="player-score" id="c_score">20</span></div>
+                    <div class="player" id="a">Art<span class="player-score" id="a_score">0</span></div>
+                    <div class="player" id="b">Bart<span class="player-score" id="b_score">10</span></div>
+                    <div class="player" id="c">Cart<span class="player-score" id="c_score">20</span></div>-->
+                </div>
             </div>
             <div id="team-host" class="team-panel">
                 <h1 class="header">Teams</h1>

@@ -15,11 +15,17 @@ body {
 .log {
     background: #e9e9e9;
     display: flex;
+    overflow: scroll;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     width: 60%;
     height: 100%;
+}
+
+.player-list{
+    position: relative;
+    height: 0px;
 }
 
 form {
@@ -109,6 +115,10 @@ input[type="text"] {
     font-family: "Raleway";
     display: flex;
     justify-content: space-between;
+    position: absolute;
+    width: calc(100% - 20px);
+    transition: 1s top;
+    top:0;
 }
 
 .panel {
