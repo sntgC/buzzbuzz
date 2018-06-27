@@ -18,6 +18,11 @@
                             g.id = parts[1];
                             g.className = "player";
                             g.innerHTML = parts[3];
+                            var score=document.createElement("span");
+                            score.id=parts[1]+"_score";
+                            score.className="player-score";
+                            score.innerHTML=0;
+                            g.appendChild(score);
                             document.getElementById("log-" + type).appendChild(g);
                         }
                     } else if (parts[2] == "l") {
@@ -60,6 +65,10 @@
                         document.getElementById("team-" + type).appendChild(g);
                     }
                     break;
+                case "4":
+                    //score event
+                    document.getElementById(parts[1]+"_score").innerHTML=parts[2];
+                    break;
 
             }
         }
@@ -81,6 +90,9 @@
             function host() {
                 document.getElementById("home").style.display = "none";
                 document.getElementById("room-host").style.display = "flex";
+                document.getElementById("reward").onclick=function(){
+                    conn.send("score/last/"+document.getElementById("points").value)
+                }
                 if (window["WebSocket"]) {
                     conn = new WebSocket("ws://" + document.location.host + "/ws");
                     conn.onclose = function(evt) {
@@ -191,7 +203,7 @@
         }
 
         h3 {
-            font-family: "Lobster";
+            font-family: "Raleway";
             font-size: 3em;
         }
 
@@ -201,14 +213,14 @@
             border: none;
             margin: 15px 10px;
             padding: 15px 20px;
-            font-size: 3em;
+            font-size: 2.5em;
             min-width: 212px;
             border-radius: 5%;
             cursor: pointer;
         }
 
         #rID {
-            font-family: "Raleway"
+            font-family: monospace;
         }
 
         #join-form {
@@ -251,6 +263,8 @@
             font-size: 2em;
             padding: 15px 10px;
             font-family: "Raleway";
+            display: flex;
+            justify-content: space-between;
         }
 
         .panel {
@@ -299,7 +313,20 @@
             padding: 4px 10px;
             font-family: "Raleway";
         }
-
+        .button-container{
+            display: flex;
+            align-items: center;
+        }
+        input[type=number]{
+            outline:none;
+            border:none;
+            font-family: monospace;
+            width: 100px;
+            font-size: 2.5em;
+        }
+        .player-score{
+            font-family: monospace;
+        }
     </style>
 </head>
 
@@ -339,7 +366,11 @@
                 <h1 class="header">Teams</h1>
             </div>
         </div>
-        <button class="button" id="reset">RESET</button>
+        <div class="button-container">
+            <input type=number id="points" value=10>
+            <button class="button" id="reward">Reward</button>
+            <button class="button" id="reset">RESET</button>
+        </div>
     </div>
 </body>
 
