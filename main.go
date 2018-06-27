@@ -19,6 +19,9 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path=="/beep.mp3"{
             http.ServeFile(w,r,"beep.mp3")
             return
+        }else if r.URL.Path=="/style.css"{
+            http.ServeFile(w,r,"style.css")
+            return
         }
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
