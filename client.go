@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
     "regexp"
 	"github.com/gorilla/websocket"
@@ -125,11 +126,11 @@ func (c *Client) writePump() {
 		ticker.Stop()
 		c.conn.Close()
 	}()
-    for v,_ :=range c.host.clients{
-        c.sendMessage("0 "+v.id+" j "+v.name)
+    for _,v :=range c.host.clients{
+        c.sendMessage("0 "+v.id+" j "+v.name+" "+strconv.Itoa(v.score))
     }
     for _,team :=range c.host.teams{
-        c.sendMessage("2 "+team.id+" c "+team.name)
+        c.sendMessage("2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score))
     }
 	for {
 		select {

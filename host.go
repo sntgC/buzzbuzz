@@ -14,7 +14,7 @@ import (
 // clients.
 type Host struct {
 	// Registered clients.
-	clients map[*Client]bool
+	clients map[string]*Client
 
 	// Inbound messages from the clients.
 	broadcast chan []byte
@@ -58,7 +58,7 @@ func newHost(w http.ResponseWriter, r *http.Request) *Host {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
         buzzer: make(chan *Client),
-		clients:    make(map[*Client]bool),
+		clients:    make(map[string]*Client),
         id: randID(5),
         conn: c,
         listening: true,
@@ -67,13 +67,13 @@ func newHost(w http.ResponseWriter, r *http.Request) *Host {
         lastBuzz:nil,
 	}
 }
-var resetTeam=regexp.MustCompile("treset/(.+)")
+var team=regexp.MustCompile("team/(reset|create|remove)/(.+)")
 var score=regexp.MustCompile(`score/(last|custom)/(\d+)`)
+var playerControl=regexp.MustCompile(`player/(kick)/(.+)`)
 func (h *Host) control(){
     defer func() {
         log.Println("CONTROL FAILED")
-		h.conn.Close()
-        delete(rooms, h.id)
+		h.end()
 	}()
 	h.conn.SetReadLimit(maxMessageSize)
     h.conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -94,25 +94,39 @@ func (h *Host) control(){
             h.listening=true
             h.broadcast<-[]byte("1 reset")
         }
-        if d:=resetTeam.FindStringSubmatch(string(message));d!=nil{
-            if t,ok:=h.teams[d[1]];ok{
-                t.muted=false
-            }
+        if d:=team.FindStringSubmatch(string(message));d!=nil{
+        	if d[1]=="reset"{
+				if t,ok:=h.teams[d[2]];ok{
+					t.muted=false
+				}
+			}else if d[1]=="create"{
+				newTeam(h,d[2])
+			}
         }
         if d:=score.FindStringSubmatch(string(message));d!=nil{
-            if(h.lastBuzz!=nil){
+            if h.lastBuzz!=nil {
                 sc,err:=strconv.Atoi(d[2])
-                if(err==nil){
+                if err==nil {
                     h.lastBuzz.score+=sc
                 }
                 if team:=h.lastBuzz.team;team!=nil{
                     h.broadcast<-[]byte("4 "+h.lastBuzz.id+" "+strconv.Itoa(h.lastBuzz.score)+" "+team.id)
+                    team.score+=sc
+                    h.broadcast<-[]byte("2 "+team.id+" u "+team.name+" "+strconv.Itoa(team.score))
+
                 }else{
                     h.broadcast<-[]byte("4 "+h.lastBuzz.id+" "+strconv.Itoa(h.lastBuzz.score))
                 }
             }
             
         }
+        if d:=playerControl.FindStringSubmatch(string(message));d!=nil {
+			if d[1] == "kick" {
+				if c, ok := h.clients[d[2]]; ok {
+					h.unregister<-c
+				}
+			}
+		}
 	}
 }
 
@@ -132,9 +146,17 @@ func (h *Host) sendMessage(msg string){
 }
 
 func (h *Host) sendAll(msg string){
-    for k,_:=range h.clients{
-        k.send<-[]byte(msg)
+    for _,v:=range h.clients{
+        v.send<-[]byte(msg)
     }
+}
+
+func (h *Host) end(){
+	h.conn.Close()
+	delete(rooms, h.id)
+	for _,v:=range h.clients{
+		v.conn.Close()
+	}
 }
 
 func (h *Host) run() {
@@ -142,34 +164,35 @@ func (h *Host) run() {
     h.sendMessage(h.id)
     defer func() {
 		ticker.Stop()
-		h.conn.Close()
+		h.end()
         log.Println("Run function ended")
 	}()
    go h.control()
 	for {
 		select {
 		case client := <-h.register:
-            msg := "0 "+client.id+" j "+client.name
-			h.clients[client] = true
+            msg := "0 "+client.id+" j "+client.name+" "+strconv.Itoa(client.score)
+			h.clients[client.id] = client
             h.sendMessage(msg)
             h.sendAll(msg)
 		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
+			if _, ok := h.clients[client.id]; ok {
+				delete(h.clients, client.id)
+				client.conn.Close()
                 msg := "0 "+client.id+" l"
                 h.sendMessage(msg)
 				close(client.send)
                 h.sendAll(msg)
 			}
         case client := <-h.buzzer:
-            if(h.listening){
-                if(client.team!=nil){
+            if h.listening {
+                if client.team!=nil {
                             log.Println("Client team is not nil")
                    team,ok:=h.teams[client.team.id]
-                    if(ok){
+                    if ok {
                         
                             log.Println("Client team exists")
-                        if(team.muted){
+                        if team.muted {
                             log.Println("Team has buzzed already")
                            break 
                         }
@@ -177,16 +200,16 @@ func (h *Host) run() {
                     }
                 }
                 h.listening=false
-                h.lastBuzz=client;
-                msg:="0 "+client.id+" b"
+                h.lastBuzz=client
+				msg:="0 "+client.id+" b"
                 h.sendMessage(msg)
                 h.sendAll(msg)
                 log.Println(client.name+" BUZZED")
             }
         case team := <-h.teamReg:
             h.teams[team.id]=team
-            msg:="2 "+team.id+" c "+team.name
-            h.sendMessage(msg)
+            msg:="2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score)
+			h.sendMessage(msg)
             h.sendAll(msg)
 		case message := <-h.broadcast:
             h.sendMessage(string(message))

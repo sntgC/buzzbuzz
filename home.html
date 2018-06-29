@@ -21,7 +21,7 @@
         function getSortedChildren(id){
             var ret=[];
             for(let c of document.getElementById(id).childNodes){
-                if(c.className == "player")
+                if(c.nodeType==Node.ELEMENT_NODE&&c.classList.contains("sortable"))
                     ret.push(c);
             }
             ret.sort(function(a,b){
@@ -44,6 +44,16 @@
             }
         }
         
+        function create(type,id,className,content,action){
+            var element=document.createElement(type);
+            element.id=id;
+            element.className=className;
+            element.innerHTML=content;
+            if(action)
+                element.onclick=action;
+            return element;
+        }
+        
         function render(parts, type, conn) {
             switch (parts[0]) {
                 case "0":
@@ -52,18 +62,24 @@
                         if (document.getElementById(parts[1]) == null) {
                             var g = document.createElement("div");
                             g.id = parts[1];
-                            g.className = "player";
+                            g.className = "player sortable";
                             g.innerHTML = parts[3];
                             g.style.order=getChildCount("log-"+type);
                             var score=document.createElement("span");
                             score.id=parts[1]+"_score";
                             score.className="player-score";
-                            score.innerHTML=0;
+                            score.innerHTML=parts[4];
                             g.appendChild(score);
+                            if(type=="host"){
+                                g.appendChild(create("button",parts[1]+"_kick","join kick","X",function(){
+                                    conn.send("player/kick/"+parts[1]);
+                                }))
+                            }
                             var listNode=document.getElementById("log-"+type);
                             listNode.appendChild(g);
                             g.style.top=cTi(listNode.style.height)+"px";
                             listNode.style.height=(cTi(listNode.style.height)+g.offsetHeight)+"px";
+                            reorder("log-"+type);
                         }
                     } else if (parts[2] == "l") {
                         var elem = document.getElementById(parts[1]);
@@ -86,8 +102,13 @@
                     if (parts[2] == "c") {
                         var g = document.createElement("div");
                         g.id = parts[1];
-                        g.className = "team";
+                        g.className = "team sortable";
                         g.innerHTML = parts[3] + " ";
+                        var score=document.createElement("span");
+                        score.id=parts[1]+"_score";
+                        score.className="team-score";
+                        score.innerHTML=parts[4];
+                        g.appendChild(score);
                         var b = document.createElement("button");
                         b.className = "join";
                         if (type == "client") {
@@ -98,19 +119,29 @@
                         } else {
                             b.className = "join reset";
                             b.onclick = function() {
-                                conn.send("treset/" + parts[1]);
+                                conn.send("team/reset/" + parts[1]);
                             }
                             b.innerHTML = "R"
                         }
                         g.appendChild(b);
-                        document.getElementById("team-" + type).appendChild(g);
+                        var listNode=document.getElementById("team-" + type);
+                        listNode.appendChild(g);
+                        g.style.top=cTi(listNode.style.height)+"px";
+                        listNode.style.height=(cTi(listNode.style.height)+g.offsetHeight)+"px";
+                        reorder("team-"+type);
+                    }else if(parts[2]=="u"){
+                        document.getElementById(parts[1]+"_score").innerHTML=parts[4];
+                        reorder("team-"+type);
+                    }else if(parts[2]=="l"){
+                        var elem = document.getElementById(parts[1]);
+                        elem.parentElement.removeChild(elem);
+                        reorder("team-"+type)
                     }
                     break;
                 case "4":
                     //score event
-                    var score=parseInt(parts[2]);
                     document.getElementById(parts[1]+"_score").innerHTML=parts[2];
-                    reorder("log"+type);
+                    reorder("log-"+type);
                     break;
 
             }
@@ -135,6 +166,9 @@
                 document.getElementById("room-host").style.display = "flex";
                 document.getElementById("reward").onclick=function(){
                     conn.send("score/last/"+document.getElementById("points").value)
+                }
+                document.getElementById("add-team").onclick=function(){
+                    conn.send("team/create/"+document.getElementById("new-team-name").value);
                 }
                 if (window["WebSocket"]) {
                     conn = new WebSocket("ws://" + document.location.host + "/ws");
@@ -225,8 +259,10 @@
                 <div class="player-list"  id="log-client">
                 </div>
             </div>
-            <div id="team-client" class="team-panel">
+            <div class="team-panel">
                 <h1 class="header">Teams</h1>
+                <div class="team-list" id="team-client">
+                </div>
             </div>
         </div>
         <button class="button" id="buzz">BUZZ</button>
@@ -237,19 +273,16 @@
             <div  class="log">
                 <h1 class="header">Players</h1>
                 <div class="player-list" id="log-host">
-                    <!--<div class="player" id="a">Art<span class="player-score" id="a_score">0</span></div>
-                    <div class="player" id="b">Bart<span class="player-score" id="b_score">10</span></div>
-                    <div class="player" id="c">Cart<span class="player-score" id="c_score">20</span></div>
-                    <div class="player" id="a">Art<span class="player-score" id="a_score">0</span></div>
-                    <div class="player" id="b">Bart<span class="player-score" id="b_score">10</span></div>
-                    <div class="player" id="c">Cart<span class="player-score" id="c_score">20</span></div>
-                    <div class="player" id="a">Art<span class="player-score" id="a_score">0</span></div>
-                    <div class="player" id="b">Bart<span class="player-score" id="b_score">10</span></div>
-                    <div class="player" id="c">Cart<span class="player-score" id="c_score">20</span></div>-->
                 </div>
             </div>
-            <div id="team-host" class="team-panel">
+            <div class="team-panel">
                 <h1 class="header">Teams</h1>
+                <div class="add-team-con">
+                    <input type="text" class="input-tight" id="new-team-name" placeholder="Add Team">
+                    <button class="join" id="add-team">+</button>
+                </div>
+                <div class="team-list" id="team-host">
+                </div>
             </div>
         </div>
         <div class="button-container">
