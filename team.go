@@ -4,14 +4,7 @@ package main
 type Team struct {
 	members map[*Client]bool
 
-	// Inbound messages from the clients.
-	broadcast chan []byte
-    
-	// Register requests from the clients.
-	register chan *Client
 
-	// Unregister requests from clients.
-	unregister chan *Client
     
     id string 
     
@@ -20,18 +13,24 @@ type Team struct {
     name string
     
     muted bool
+    host *Host
+}
+
+func (t *Team) destroy(){
+	for k:=range t.members{
+		k.team=nil
+	}
+	t.host.teamReg<-t
 }
 
 func newTeam(host *Host,name string) *Team {
     team:=&Team{
         make(map[*Client]bool),
-        make(chan []byte),
-        make(chan *Client),
-        make(chan *Client),
         randID(10),
         0,
         name,
         false,
+        host,
 	}
     host.teamReg<-team
     return team

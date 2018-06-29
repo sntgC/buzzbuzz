@@ -101,6 +101,10 @@ func (h *Host) control(){
 				}
 			}else if d[1]=="create"{
 				newTeam(h,d[2])
+			}else if d[1]=="remove"{
+				if t,ok:=h.teams[d[2]];ok{
+					t.destroy()
+				}
 			}
         }
         if d:=score.FindStringSubmatch(string(message));d!=nil{
@@ -207,10 +211,16 @@ func (h *Host) run() {
                 log.Println(client.name+" BUZZED")
             }
         case team := <-h.teamReg:
-            h.teams[team.id]=team
-            msg:="2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score)
+        	var msg string
+            if t,ok:=h.teams[team.id];ok{
+            	delete(h.teams,team.id)	
+				msg="2 "+t.id+" l "
+			}else{
+				h.teams[team.id]=team
+				msg="2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score)
+			}
 			h.sendMessage(msg)
-            h.sendAll(msg)
+			h.sendAll(msg)
 		case message := <-h.broadcast:
             h.sendMessage(string(message))
             h.sendAll(string(message))
