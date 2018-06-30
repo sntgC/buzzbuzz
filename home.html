@@ -4,6 +4,7 @@
 <head>
     <title>Buzz Buzz</title>
     <link href="https://fonts.googleapis.com/css?family=Lobster|Raleway" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script type="text/javascript">
         var buzz;
         var beep = new Audio("beep.mp3");
@@ -57,8 +58,9 @@
             return element;
         }
 
-        function addToTeam(pId, tId,type) {
-            document.getElementById(tId + "_members").appendChild(create("div",pId + "_team", "", document.getElementById(pId).childNodes[0].nodeValue))
+        function addToTeam(pId, tId, type) {
+            if (document.getElementById(pId + "_team") == null)
+                document.getElementById(tId + "_members").appendChild(create("div", pId + "_team", "", document.getElementById(pId).childNodes[0].nodeValue))
             reorder("team-" + type);
         }
 
@@ -75,15 +77,17 @@
                             score.innerHTML = parts[4];
                             g.appendChild(score);
                             if (type == "host") {
-                                g.appendChild(create("button", parts[1] + "_kick", "join kick", "X", function() {
-                                    conn.send("player/kick/" + parts[1]);
-                                }))
+                                g.appendChild(create("button", parts[1] + "_kick", "join kick",
+                                    "<i class='material-icons'>remove_circle_outline</i>",
+                                    function() {
+                                        conn.send("player/kick/" + parts[1]);
+                                    }))
                             }
                             var listNode = document.getElementById("log-" + type);
                             listNode.appendChild(g);
                             reorder("log-" + type);
-                            if(parts[5])
-                                addToTeam(parts[1],parts[5],type);
+                            if (parts[5])
+                                addToTeam(parts[1], parts[5], type);
                         }
                     } else if (parts[2] == "l") {
                         var elem = document.getElementById(parts[1]);
@@ -118,19 +122,19 @@
                         score.innerHTML = parts[4];
                         h.appendChild(score);
                         var b = document.createElement("button");
-                        b.className = "join";
                         if (type == "client") {
                             b.onclick = function() {
                                 conn.send("team/join/" + parts[1]);
                             }
-                            b.innerHTML = "+";
+                            b.innerHTML = "<i class='material-icons'>group_add</i>";
+                            b.className="join reset";
                         } else {
                             b.className = "join reset";
                             b.onclick = function() {
                                 conn.send("team/reset/" + parts[1]);
                             }
-                            b.innerHTML = "R"
-                            h.appendChild(create("button", parts[1] + "_kick", "join kick", "X", function() {
+                            b.innerHTML = "<i class='material-icons'>settings_backup_restore</i>"
+                            h.appendChild(create("button", parts[1] + "_kick", "join kick", "<i class='material-icons'>remove_circle_outline</i>", function() {
                                 conn.send("team/remove/" + parts[1]);
                             }));
                         }
@@ -151,7 +155,7 @@
                     break;
                 case "3":
                     //Team Join event
-                    addToTeam(parts[1], parts[3]);
+                    addToTeam(parts[1], parts[3], type);
                     break;
                 case "4":
                     //score event
@@ -214,6 +218,15 @@
             function join() {
                 document.getElementById("join-form").style.display = "none";
                 document.getElementById("room-client").style.display = "flex";
+                document.getElementById("hmbg").onclick = function() {
+                    var slide = document.getElementById("panel-client");
+                    var left = slide.style.left;
+                    if (left == "" || left == "0px") {
+                        slide.style.left = "-100%";
+                    } else {
+                        slide.style.left = "0";
+                    }
+                }
                 if (window["WebSocket"]) {
                     conn = new WebSocket("ws://" + document.location.host + "/client?roomID=" + document.getElementById("room").value + "&name=" + document.getElementById("name").value);
                     conn.onclose = function(evt) {
@@ -255,10 +268,11 @@
 <body>
     <div id="home">
         <h2>Buzz Buzz</h2>
-        <button class="button" id="host">HOST</button>
+        <button class="button non-mobile" id="host">HOST</button>
         <button class="button" id="join-options">JOIN</button>
     </div>
     <div id="join-form" class="view">
+        <h2>Buzz Buzz</h2>
         <form id="jf">
             <label>Room ID</label>
             <input type="text" id="room">
@@ -268,15 +282,20 @@
         </form>
     </div>
     <div id="room-client" class="view">
-        <div id="panel-client" class="panel">
-            <div class="log">
-                <h1 class="header">Players</h1>
-                <div class="player-list" id="log-client">
-                </div>
+        <div class="mobile-container">
+            <div class="hmbg-button" id="hmbg">
+                <i class="material-icons">menu</i>
             </div>
-            <div class="team-panel">
-                <h1 class="header">Teams</h1>
-                <div class="team-list" id="team-client">
+            <div id="panel-client" class="panel">
+                <div class="log">
+                    <h1 class="header">Players</h1>
+                    <div class="player-list" id="log-client">
+                    </div>
+                </div>
+                <div class="team-panel">
+                    <h1 class="header">Teams</h1>
+                    <div class="team-list" id="team-client">
+                    </div>
                 </div>
             </div>
         </div>
@@ -284,26 +303,28 @@
     </div>
     <div id="room-host" class="view">
         <h3>Your <span id="rw">Room ID</span> is : <span id="rID"></span></h3>
-        <div id="panel-host" class="panel">
-            <div class="log">
-                <h1 class="header">Players</h1>
-                <div class="player-list" id="log-host">
+        <div class="mobile-container">
+            <div id="panel-host" class="panel">
+                <div class="log">
+                    <h1 class="header">Players</h1>
+                    <div class="player-list" id="log-host">
+                    </div>
                 </div>
-            </div>
-            <div class="team-panel">
-                <h1 class="header">Teams</h1>
-                <div class="add-team-con">
-                    <input type="text" class="input-tight" id="new-team-name" placeholder="Add Team">
-                    <button class="join" id="add-team">+</button>
-                </div>
-                <div class="team-list" id="team-host">
+                <div class="team-panel">
+                    <h1 class="header">Teams</h1>
+                    <div class="add-team-con">
+                        <input type="text" class="input-tight" id="new-team-name" placeholder="Add Team">
+                        <button class="join black" id="add-team"><i class='material-icons'>create</i></button>
+                    </div>
+                    <div class="team-list" id="team-host">
+                    </div>
                 </div>
             </div>
         </div>
         <div class="button-container">
             <input type=number id="points" value=10>
-            <button class="button" id="reward">Reward</button>
-            <button class="button" id="reset">RESET</button>
+            <button class="button control-button" id="reward">Reward</button>
+            <button class="button control-button" id="reset">Reset</button>
         </div>
     </div>
 </body>
