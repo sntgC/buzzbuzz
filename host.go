@@ -213,7 +213,7 @@ func (h *Host) run() {
         case team := <-h.teamReg:
         	var msg string
             if t,ok:=h.teams[team.id];ok{
-            	delete(h.teams,team.id)	
+            	delete(h.teams,team.id)
 				msg="2 "+t.id+" l "
 			}else{
 				h.teams[team.id]=team

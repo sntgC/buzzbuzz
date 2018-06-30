@@ -126,11 +126,15 @@ func (c *Client) writePump() {
 		ticker.Stop()
 		c.conn.Close()
 	}()
+	for _,team :=range c.host.teams{
+		c.sendMessage("2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score))
+	}
     for _,v :=range c.host.clients{
-        c.sendMessage("0 "+v.id+" j "+v.name+" "+strconv.Itoa(v.score))
-    }
-    for _,team :=range c.host.teams{
-        c.sendMessage("2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score))
+    	if t:=v.team;t!=nil{
+			c.sendMessage("0 "+v.id+" j "+v.name+" "+strconv.Itoa(v.score)+" "+t.id)
+		}else{
+			c.sendMessage("0 "+v.id+" j "+v.name+" "+strconv.Itoa(v.score))
+		}
     }
 	for {
 		select {
