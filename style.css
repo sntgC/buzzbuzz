@@ -9,7 +9,8 @@ body {
     margin: 0;
     width: 100%;
     height: 100%;
-    background: #efefef;
+    background: #17BEBB;
+    color:white;
 }
 
 .log {
@@ -56,7 +57,6 @@ label {
     height: 100%;
     align-items: center;
     justify-content: center;
-    background: #efefef;
 }
 
 h2 {
@@ -72,20 +72,35 @@ h3 {
 
 .button {
     font-family: "Raleway";
+    background: #E4572E;
     outline: none;
-    border: none;
+    color:white;
+    border: 5px solid white;
     margin: 15px 10px;
-    padding: 15px 20px;
+    padding: 10px 20px;
     font-size: 2.5em;
     min-width: 212px;
-    border-radius: 5%;
+    border-radius: 10px;
+    box-shadow:0px 1px 8px 0px rgba(0, 0, 0, 0.2),
+    0px 3px 4px 0px rgba(0, 0, 0, 0.14),
+    0px 3px 3px -2px rgba(0, 0, 0, 0.12);
     cursor: pointer;
+}
+
+.button:hover{
+    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2),
+    0px 6px 10px 0px rgba(0, 0, 0, 0.14),
+    0px 1px 18px 0px rgba(0, 0, 0, 0.12); 
 }
 
 .control-button{
     font-size: 2em;
     padding: 10px 15px;
     margin: 10px 10px;
+}
+
+#reward{
+    background: #76B041;
 }
 
 #rID {
@@ -126,6 +141,7 @@ input[type="text"] {
     justify-content: space-between;
     align-items: center;   
     padding: 10px 15px;
+    color:black;
     width: calc(100% - 30px);
 }
 
@@ -161,6 +177,7 @@ input[type="text"] {
     width: calc(100% - 20px);
     transition: 1s top;
     top:0;
+    color:black;
 }
 
 .panel {
@@ -231,7 +248,7 @@ input[type="text"] {
 }
 
 .header {
-    background: black;
+    background: #FC9E4F;
     color: white;
     margin: 0;
     border-radius: 1% 1% 0 0;
