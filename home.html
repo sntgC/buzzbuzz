@@ -40,9 +40,34 @@
         function reorder(id) {
             var children = getSortedChildren(id);
             var height = 0;
+            var runrank=1;
+            var skips=0;
             for (i = 0; i < children.length; i++) {
-                children[i].style.order = 1 + i;
-                document.getElementById(children[i].id+"_rank").innerHTML=1+i;
+                children[i].style.order=runrank;
+                if(i%2==0){
+                    children[i].style.backgroundColor="#F1E5D3";
+                }else{
+                    children[i].style.backgroundColor="#E9E9E9";
+                }
+                var el=document.getElementById(children[i].id+"_rank");
+                el.innerHTML=runrank;
+                if(runrank==1)
+                    el.style.backgroundColor="#DAA520";
+                else if(runrank==2){
+                    el.style.backgroundColor="#D3D3D3";
+                }
+                else if(runrank==3){
+                    el.style.backgroundColor="#CD7F32";
+                }
+                if(i<children.length-1){
+                    var scoreA=parseInt(document.getElementById(children[i].id+"_score").innerText.replace(/\D/g,""));
+                    var scoreB=parseInt(document.getElementById(children[i+1].id+"_score").innerText.replace(/\D/g,""));
+                    if(scoreA==scoreB){
+                        skips++;
+                    }else{
+                        runrank+=1+skips;
+                    }
+                }
                 children[i].style.top = height + "px";
                 height += children[i].getBoundingClientRect().height;
             }
@@ -61,7 +86,7 @@
 
         function addToTeam(pId, tId, type) {
             if (document.getElementById(pId + "_team") == null)
-                document.getElementById(tId + "_members").appendChild(create("div", pId + "_team", "", document.getElementById(pId+"_name").innerHTML))
+                document.getElementById(tId + "_members").appendChild(create("div", pId + "_team", "team-member", document.getElementById(pId+"_name").innerHTML))
             reorder("team-" + type);
         }
 
@@ -74,9 +99,8 @@
                             var g = create("div", parts[1], "player sortable", "");
                             g.append(create("span",parts[1]+"_name","player-name",parts[3]));
                             var score = document.createElement("span");
-                            score.id = parts[1] + "_score";
                             score.className = "player-score";
-                            score.innerHTML = parts[4];
+                            score.appendChild(create("span",parts[1]+"_score","",parts[4]));
                             g.prepend(create("div",parts[1]+"_rank","rank","1"));
                             g.appendChild(score);
                             if (type == "host") {
@@ -121,9 +145,8 @@
                         h.appendChild(create("div",parts[1]+"_rank","rank","1"));
                         h.appendChild(create("span","","team-name",parts[3]));
                         var score = document.createElement("span");
-                        score.id = parts[1] + "_score";
                         score.className = "team-score";
-                        score.innerHTML = parts[4];
+                        score.appendChild(create("span",parts[1]+"_score","",parts[4]));
                         h.appendChild(score);
                         var b = document.createElement("button");
                         if (type == "client") {

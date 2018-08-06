@@ -150,12 +150,16 @@ input[type="text"] {
 }
 
 .team-name{
-    padding: 15px 10pxl
+}
+
+.team-member{
+    padding: 5px 10px;
 }
 
 .team-info{
     font-size: 61.8%;
     padding: 0px 20px;
+    color:black;
     width: calc(100% - 40px);
 }
 
@@ -185,11 +189,11 @@ input[type="text"] {
     transition: 1s top;
     top:0;
     color:black;
+    background: #e9e9e9;
 }
 
-.player:nth-child(2n){
-    background: #F1E5D3;
-}
+
+
 
 .panel {
     display: flex;
@@ -223,10 +227,6 @@ input[type="text"] {
     width: 100%;
     transition: 1s top;
     top:0;
-}
-
-.team:nth-child(2n){
-    background: #F1E5D3;
 }
 
 .join {
