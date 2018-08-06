@@ -42,8 +42,9 @@
             var height = 0;
             for (i = 0; i < children.length; i++) {
                 children[i].style.order = 1 + i;
+                document.getElementById(children[i].id+"_rank").innerHTML=1+i;
                 children[i].style.top = height + "px";
-                height += children[i].offsetHeight;
+                height += children[i].getBoundingClientRect().height;
             }
             document.getElementById(id).style.height = height + "px";
         }
@@ -60,7 +61,7 @@
 
         function addToTeam(pId, tId, type) {
             if (document.getElementById(pId + "_team") == null)
-                document.getElementById(tId + "_members").appendChild(create("div", pId + "_team", "", document.getElementById(pId).childNodes[0].nodeValue))
+                document.getElementById(tId + "_members").appendChild(create("div", pId + "_team", "", document.getElementById(pId+"_name").innerHTML))
             reorder("team-" + type);
         }
 
@@ -70,14 +71,16 @@
                     //Player action event
                     if (parts[2] == "j") {
                         if (document.getElementById(parts[1]) == null) {
-                            var g = create("div", parts[1], "player sortable", parts[3])
+                            var g = create("div", parts[1], "player sortable", "");
+                            g.append(create("span",parts[1]+"_name","player-name",parts[3]));
                             var score = document.createElement("span");
                             score.id = parts[1] + "_score";
                             score.className = "player-score";
                             score.innerHTML = parts[4];
+                            g.prepend(create("div",parts[1]+"_rank","rank","1"));
                             g.appendChild(score);
                             if (type == "host") {
-                                g.appendChild(create("button", parts[1] + "_kick", "join kick",
+                                score.appendChild(create("button", parts[1] + "_kick", "join kick",
                                     "<i class='material-icons'>remove_circle_outline</i>",
                                     function() {
                                         conn.send("player/kick/" + parts[1]);
@@ -114,8 +117,9 @@
                         var g = document.createElement("div");
                         g.id = parts[1];
                         g.className = "team sortable";
-                        var h = create("div", "", "team-header");
-                        h.innerHTML = parts[3] + " ";
+                        var h = create("div", "", "team-header","");
+                        h.appendChild(create("div",parts[1]+"_rank","rank","1"));
+                        h.appendChild(create("span","","team-name",parts[3]));
                         var score = document.createElement("span");
                         score.id = parts[1] + "_score";
                         score.className = "team-score";
@@ -134,11 +138,11 @@
                                 conn.send("team/reset/" + parts[1]);
                             }
                             b.innerHTML = "<i class='material-icons'>settings_backup_restore</i>"
-                            h.appendChild(create("button", parts[1] + "_kick", "join kick", "<i class='material-icons'>remove_circle_outline</i>", function() {
+                            score.appendChild(create("button", parts[1] + "_kick", "join kick", "<i class='material-icons'>remove_circle_outline</i>", function() {
                                 conn.send("team/remove/" + parts[1]);
                             }));
                         }
-                        h.appendChild(b);
+                        score.appendChild(b);
                         var listNode = document.getElementById("team-" + type);
                         listNode.appendChild(g);
                         g.appendChild(h);

@@ -9,7 +9,7 @@ body {
     margin: 0;
     width: 100%;
     height: 100%;
-    background: #17BEBB;
+    background: #6DC4B7;
     color:white;
 }
 
@@ -67,12 +67,12 @@ h2 {
 h3 {
     font-family: "Raleway";
     font-size: 3em;
-    margin: 20px 0 35px 0;
+    margin: 30px 0 35px 0;
 }
 
 .button {
     font-family: "Raleway";
-    background: #E4572E;
+    background: #B8554E;
     outline: none;
     color:white;
     border: 5px solid white;
@@ -105,6 +105,10 @@ h3 {
 
 #rID {
     font-family: monospace;
+    font-weight: lighter;
+    background: #B8554E;
+    padding: 5px 10px;
+    border-radius: 10px;
 }
 
 #join-form {
@@ -139,15 +143,19 @@ input[type="text"] {
 .team-header{
     display: flex;
     justify-content: space-between;
-    align-items: center;   
-    padding: 10px 15px;
+    align-items: center;  
     color:black;
-    width: calc(100% - 30px);
+    font-size: 90%;
+    width: 100%;
+}
+
+.team-name{
+    padding: 15px 10pxl
 }
 
 .team-info{
     font-size: 61.8%;
-    padding: 5px 20px;
+    padding: 0px 20px;
     width: calc(100% - 40px);
 }
 
@@ -169,15 +177,18 @@ input[type="text"] {
 
 .player {
     font-size: 2em;
-    padding: 15px 10px;
     font-family: "Raleway";
     display: flex;
     justify-content: space-between;
     position: absolute;
-    width: calc(100% - 20px);
+    width: 100%;
     transition: 1s top;
     top:0;
     color:black;
+}
+
+.player:nth-child(2n){
+    background: #F1E5D3;
 }
 
 .panel {
@@ -214,6 +225,10 @@ input[type="text"] {
     top:0;
 }
 
+.team:nth-child(2n){
+    background: #F1E5D3;
+}
+
 .join {
     outline: none;
     border: none;
@@ -231,9 +246,23 @@ input[type="text"] {
     font-size: inherit;
 }
 
+.rank{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: monospace;
+    background: rgba(0,0,0,.15);
+    padding: 15px 10px;
+}
+
 .kick{
     background: none;
     color:red;
+    margin: 0 0 0 15px;
+}
+
+#reset{
+    background: #E4572E;
 }
 
 .reset {
@@ -248,12 +277,12 @@ input[type="text"] {
 }
 
 .header {
-    background: #FC9E4F;
+    background: #B8554E;
     color: white;
     margin: 0;
+    font-family: "Lobster";
     border-radius: 1% 1% 0 0;
     padding: 4px 10px;
-    font-family: "Raleway";
     order:0;
 }
 .button-container{
@@ -269,6 +298,23 @@ input[type=number]{
 }
 .player-score,.team-score{
     font-family: monospace;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 15px 10px;
+    min-width: 60px;
+}
+
+.team-score .kick{
+    margin: 0 0 0 15px;
+}
+
+.team-score .reset{
+    margin: 0 0 0 15px;
+}
+
+.player-name{
+    padding: 15px 10px;
 }
 
 @media only screen and (max-width: 1000px) {
