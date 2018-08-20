@@ -10,8 +10,7 @@ import (
     "strconv"
 	"github.com/gorilla/websocket"
 )
-// Hub maintains the set of active clients and broadcasts messages to the
-// clients.
+//Each host acts as a collection of clients and transmits and controls the messages between them
 type Host struct {
 	// Registered clients.
 	clients map[string]*Client
@@ -67,12 +66,30 @@ func newHost(w http.ResponseWriter, r *http.Request) *Host {
         lastBuzz:nil,
 	}
 }
+
+//Action regex templates
 var team=regexp.MustCompile("team/(reset|create|remove)/(.+)")
 var score=regexp.MustCompile(`score/(last|custom)/(\d+)`)
 var playerControl=regexp.MustCompile(`player/(kick)/(.+)`)
+
+/*
+Host message codes:
+    0 - Client event
+        j - join
+        l - leave
+        b - buzz
+    1 - reset buzzer
+    2 - Team event
+        c - create
+        l - leave
+        u - update score
+    4 - Player score event
+*/
+
+//Basically equivalent to the readPump function of the client class
 func (h *Host) control(){
     defer func() {
-        log.Println("CONTROL FAILED")
+        log.Println("CONTROL EXITED")
 		h.end()
 	}()
 	h.conn.SetReadLimit(maxMessageSize)
@@ -89,7 +106,6 @@ func (h *Host) control(){
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-        log.Println(message)
         if string(message)=="reset"{
             h.listening=true
             h.broadcast<-[]byte("1 reset")
@@ -169,7 +185,6 @@ func (h *Host) run() {
     defer func() {
 		ticker.Stop()
 		h.end()
-        log.Println("Run function ended")
 	}()
    go h.control()
 	for {

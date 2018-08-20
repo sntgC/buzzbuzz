@@ -54,13 +54,16 @@ type Client struct {
     score int
 }
 
+//Request regex templates
+var teamRequest = regexp.MustCompile(`(team)/(join|create)/(.+)`)
+var buzzRequest = regexp.MustCompile(`Buzz`)
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-var teamRequest = regexp.MustCompile(`(team)/(join|create)/(.+)`)
-var buzzRequest = regexp.MustCompile(`Buzz`)
+
 func (c *Client) readPump() {
 	defer func() {
 		c.host.unregister <- c
@@ -78,7 +81,6 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-        //log.Println(message)
         switch{
             case buzzRequest.MatchString(string(message)):
                 c.host.buzzer <- c
@@ -121,11 +123,13 @@ func (c *Client) sendMessage(msg string){
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *Client) writePump() {
+    //Sets up a timer to recurrently ping the socket conneciton
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
 	}()
+    // Sends current game info to newly registered clients, before subscribing them to the socket
 	for _,team :=range c.host.teams{
 		c.sendMessage("2 "+team.id+" c "+team.name+" "+strconv.Itoa(team.score))
 	}
@@ -136,12 +140,13 @@ func (c *Client) writePump() {
 			c.sendMessage("0 "+v.id+" j "+v.name+" "+strconv.Itoa(v.score))
 		}
     }
+    
 	for {
 		select {
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel.
+				// The host closed the channel.
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -180,8 +185,7 @@ func serveWs(host *Host, w http.ResponseWriter, r *http.Request,name string) {
 	}
     client := &Client{host: host, conn: conn, send: make(chan []byte, 256),name:name,id:randID(16),team:nil,score:0}
     client.host.register <- client
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
+	// Creates separate read and write routines
 	go client.writePump()
 	go client.readPump()
 }

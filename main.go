@@ -15,6 +15,7 @@ var rooms map[string]*Host
 
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
+    //There's only 3 files the server allows to far
 	if r.URL.Path != "/" {
         if r.URL.Path=="/beep.mp3"{
             http.ServeFile(w,r,"beep.mp3")

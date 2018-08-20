@@ -6,9 +6,11 @@
     <link href="https://fonts.googleapis.com/css?family=Lobster|Raleway" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script type="text/javascript">
+        //Only reason js is here is because it was intended to be lightweight and to avoid additional server requests
         var buzz;
         var beep = new Audio("beep.mp3");
 
+        //Returns the child cound of an element
         function getChildCount(id) {
             var children = document.getElementById(id).childNodes;
             var cnt = 0;
@@ -18,7 +20,8 @@
             }
             return cnt;
         }
-
+        
+        //Returns an array full of an element's children sorted
         function getSortedChildren(id) {
             var ret = [];
             for (let c of document.getElementById(id).childNodes) {
@@ -31,12 +34,14 @@
             return ret;
         }
 
+        //Forgot what this does. Stands for c_____ to Integer
         function cTi(str) {
             if (str.length == 0)
                 return 0;
             return parseInt(str.substring(0, str.length - 2));
         }
-
+        
+        //Orders the children top down in a parent div
         function reorder(id) {
             var children = getSortedChildren(id);
             var height = 0;
@@ -83,7 +88,8 @@
                 element.onclick = action;
             return element;
         }
-
+        
+        //Renders a player unto a team
         function addToTeam(pId, tId, type) {
             if (document.getElementById(pId + "_team") == null)
                 document.getElementById(tId + "_members").appendChild(create("div", pId + "_team", "team-member", document.getElementById(pId+"_name").innerHTML))
